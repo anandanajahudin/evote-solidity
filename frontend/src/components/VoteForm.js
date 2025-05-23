@@ -3,19 +3,31 @@ import { useState } from "react";
 function VoteForm({ contract }) {
   const [proposalId, setProposalId] = useState("");
   const [voteYes, setVoteYes] = useState(true);
-  const [nullifierHash, setNullifierHash] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fungsi generate nullifierHash (32-byte hex)
+  const generateNullifierHash = () => {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return (
+      "0x" +
+      Array.from(array)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+    );
+  };
 
   const submitVote = async (e) => {
     e.preventDefault();
-
-    if (!/^0x[0-9a-fA-F]{64}$/.test(nullifierHash)) {
-      alert(
-        "❗ Nullifier Hash must be a valid 0x-prefixed 32-byte hex string."
-      );
+    if (!proposalId) {
+      alert("Please enter Proposal ID");
       return;
     }
-
+    setSubmitting(true);
     try {
+      // Generate nullifierHash di sini, saat tombol submit ditekan
+      const nullifierHash = generateNullifierHash();
+
       const tx = await contract.submitVote(
         Number(proposalId),
         nullifierHash,
@@ -23,102 +35,57 @@ function VoteForm({ contract }) {
       );
       await tx.wait();
       alert("✅ Vote submitted!");
+      setProposalId("");
+      setVoteYes(true);
     } catch (err) {
       console.error(err);
-      alert(
-        "❌ Failed to vote. Please check the proposal ID, hash, or your membership."
-      );
+      alert("❌ Failed to submit vote");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <form
-      onSubmit={submitVote}
-      style={{
-        maxWidth: "400px",
-        margin: "20px auto",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        backgroundColor: "#f9f9f9",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-      }}
-    >
-      <h2 style={{ textAlign: "center", marginBottom: "20px", color: "#333" }}>
-        🗳️ Submit Vote
-      </h2>
-
-      <label style={{ display: "block", marginBottom: "10px", color: "#555" }}>
+    <form onSubmit={submitVote} style={{ marginTop: "20px" }}>
+      <h2>Submit Vote</h2>
+      <label>
         Proposal ID:
         <input
           type="number"
+          min="1"
           value={proposalId}
           onChange={(e) => setProposalId(e.target.value)}
-          placeholder="Enter proposal ID"
           required
-          style={{
-            width: "100%",
-            padding: "8px",
-            marginTop: "6px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-            boxSizing: "border-box",
-          }}
+          style={{ marginLeft: "10px" }}
+          disabled={submitting}
         />
       </label>
-
-      <label style={{ display: "block", marginBottom: "10px", color: "#555" }}>
-        Nullifier Hash:
-        <input
-          value={nullifierHash}
-          onChange={(e) => setNullifierHash(e.target.value)}
-          placeholder="0x..."
-          required
-          style={{
-            width: "100%",
-            padding: "8px",
-            marginTop: "6px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-            boxSizing: "border-box",
-            fontFamily: "monospace",
-          }}
-        />
-      </label>
-
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: "20px",
-          color: "#555",
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={voteYes}
-          onChange={() => setVoteYes(!voteYes)}
-          style={{ marginRight: "10px" }}
-        />
-        Vote Yes
-      </label>
-
-      <button
-        type="submit"
-        style={{
-          width: "100%",
-          padding: "10px",
-          backgroundColor: "#007bff",
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "16px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-      >
-        Submit Vote
+      <div style={{ marginTop: "10px" }}>
+        <label style={{ marginRight: "15px" }}>
+          <input
+            type="radio"
+            name="vote"
+            value="yes"
+            checked={voteYes === true}
+            onChange={() => setVoteYes(true)}
+            disabled={submitting}
+          />
+          Yes
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="vote"
+            value="no"
+            checked={voteYes === false}
+            onChange={() => setVoteYes(false)}
+            disabled={submitting}
+          />
+          No
+        </label>
+      </div>
+      <button type="submit" disabled={submitting} style={{ marginTop: "15px" }}>
+        {submitting ? "Submitting..." : "Submit Vote"}
       </button>
     </form>
   );
