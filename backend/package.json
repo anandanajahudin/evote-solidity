@@ -1,0 +1,23 @@
+{
+    "name": "evote-backend",
+    "version": "1.0.0",
+    "description": "Smart contract backend for Evote DApp",
+    "main": "index.js",
+    "scripts": {
+        "test": "npx hardhat test",
+        "compile": "npx hardhat compile",
+        "deploy:localhost": "npx hardhat run scripts/deploy.js --network localhost",
+        "node": "npx hardhat node"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "dotenv": "^16.5.0",
+        "ethers": "^6.8.1"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+        "hardhat": "^2.24.0"
+    }
+}
