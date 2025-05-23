@@ -86,3 +86,4 @@ evote-solidity/
    ```bash
    npm start
    ```
+   Access the app at http://localhost:3000.
