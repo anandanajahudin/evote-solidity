@@ -10,6 +10,7 @@ function App() {
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
   const [provider, setProvider] = useState(null);
+  const [refresh, setRefresh] = useState(0); // Trigger refresh untuk update ProposalList
 
   useEffect(() => {
     async function connectWallet() {
@@ -22,7 +23,7 @@ function App() {
           const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
 
           if (!contractAddress) {
-            alert("Kontrak address belum diatur di .env");
+            alert("Contract address is not set in .env");
             return;
           }
 
@@ -38,16 +39,21 @@ function App() {
           setAccount(userAddress);
           setContract(votingContract);
         } catch (error) {
-          console.error("❌ Gagal koneksi MetaMask:", error);
-          alert("Gagal menghubungkan MetaMask. Pastikan MetaMask aktif.");
+          console.error("Failed to connect MetaMask:", error);
+          alert("Failed to connect MetaMask. Please check your wallet.");
         }
       } else {
-        alert("❗ MetaMask tidak ditemukan. Harap instal MetaMask.");
+        alert("MetaMask not found. Please install MetaMask.");
       }
     }
 
     connectWallet();
   }, []);
+
+  // Fungsi untuk dipassing ke CreateProposalForm supaya refresh ProposalList setelah create proposal
+  const handleProposalCreated = () => {
+    setRefresh((r) => r + 1);
+  };
 
   return (
     <div style={{ padding: "20px" }}>
@@ -63,9 +69,17 @@ function App() {
         <p>🔌 Waiting for contract connection...</p>
       ) : (
         <>
-          <CreateProposalForm contract={contract} />
-          <VoteForm contract={contract} />
-          <ProposalList contract={contract} />
+          {/* Passing onCreated callback ke CreateProposalForm */}
+          <CreateProposalForm
+            contract={contract}
+            onCreated={handleProposalCreated}
+          />
+          <VoteForm
+            contract={contract}
+            onVoteSuccess={() => setRefresh((r) => r + 1)} // trigger refresh setelah vote sukses
+          />
+          {/* Pastikan ProposalList menerima refresh sebagai dependency */}
+          <ProposalList contract={contract} refresh={refresh} />
         </>
       )}
     </div>
